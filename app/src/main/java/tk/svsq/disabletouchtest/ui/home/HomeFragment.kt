@@ -8,6 +8,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.core.util.rangeTo
 import androidx.fragment.app.Fragment
@@ -23,6 +24,7 @@ class HomeFragment : Fragment() {
 
     var textView: TextView? = null
     var button: Button? = null
+    //var touchContainer: FrameLayout? = null
 
     private val disableTouchListener = View.OnClickListener {
         button?.isEnabled = false
@@ -55,10 +57,11 @@ class HomeFragment : Fragment() {
     ): View? {
         homeViewModel =
             ViewModelProvider(this).get(HomeViewModel::class.java)
-        val root = inflater.inflate(R.layout.fragment_home, container, false)
+            val root = inflater.inflate(R.layout.fragment_home, container, false)
 
         textView = root.findViewById(R.id.text_home)
         button = root.findViewById(R.id.button)
+        //touchContainer = root.findViewById(R.id.flContainer)
 
         homeViewModel.text.observe(viewLifecycleOwner) {
             textView?.text = it
@@ -66,14 +69,20 @@ class HomeFragment : Fragment() {
 
         button?.setOnClickListener(disableTouchListener)
 
+        /*activity?.supportFragmentManager?.beginTransaction()
+            ?.add(R.id.flContainer, ClickFragment(), "TAG")
+            ?.commit()*/
+
         return root
     }
 
     private fun disableTouch() {
         (activity as MainActivity).disableTouch()
+        //touchContainer?.visibility = View.VISIBLE
     }
 
     private fun enableTouch() {
         (activity as MainActivity).enableTouch()
+        //touchContainer?.visibility = View.GONE
     }
 }

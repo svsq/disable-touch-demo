@@ -1,22 +1,25 @@
 package tk.svsq.disabletouchtest
 
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
 import android.view.KeyEvent
-import android.view.View
-import android.view.WindowManager
-import com.google.android.material.bottomnavigation.BottomNavigationView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
+import com.google.android.material.bottomnavigation.BottomNavigationView
+import tk.svsq.disabletouchtest.root.DisableStdLauncherRootCommands
+import tk.svsq.disabletouchtest.root.DisableSystemUiRootCommands
+import tk.svsq.disabletouchtest.root.ExecuteAsRootBase
+import java.io.DataOutputStream
+import java.io.IOException
+
 
 class MainActivity : AppCompatActivity() {
 
-    private var touchDisabled = false
+    var kioskActivated: Boolean? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,13 +41,13 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
 
-        if(touchDisabled) disableTouch()
+        if(kioskActivated == true) enableKioskMode()
     }
 
     @Suppress("DEPRECATION")
-    fun disableTouch() {
-        window.apply {
-            addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE)
+    fun enableKioskMode() {
+        /*window.apply {
+            //addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE)
             decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_IMMERSIVE
                     // Set the content to appear under the system bars so that the
                     // content doesn't resize when the system bars hide and show.
@@ -54,21 +57,60 @@ class MainActivity : AppCompatActivity() {
                     // Hide the nav bar and status bar
                     or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
                     or View.SYSTEM_UI_FLAG_FULLSCREEN)
+        }*/
+
+        //disableSystemBar()
+
+        if(ExecuteAsRootBase.canRunRootCommands()) {
+            DisableSystemUiRootCommands().execute()
+
+            DisableStdLauncherRootCommands().execute()
+        } else {
+            Toast.makeText(this, "Cannot run ROOT commands from this app", Toast.LENGTH_SHORT).show()
         }
 
-        touchDisabled = true
+        kioskActivated = true
     }
 
     @Suppress("DEPRECATION")
-    fun enableTouch() {
-        window.apply {
-            clearFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE)
+    fun disableKioskMode() {
+        /*window.apply {
+            //clearFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE)
             decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                     or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                     or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN)
-        }
+        }*/
 
-        touchDisabled = false
+        //enableSystemBar()
+
+        kioskActivated = false
+    }
+
+    private fun disableSystemBar() {
+        try {
+            //REQUIRES ROOT
+            Runtime.getRuntime().exec(
+                arrayOf(
+                    "su", "-c",
+                    "service call activity 42 s16 com.android.systemui"
+                )
+            ).waitFor()
+        } catch (ex: Exception) {
+            Toast.makeText(this, ex.message, Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun enableSystemBar() {
+        try {
+            Runtime.getRuntime().exec(
+                arrayOf(
+                    "am", "startservice", "-n",
+                    "com.android.systemui/.SystemUIService"
+                )
+            )
+        } catch (e: IOException) {
+            Toast.makeText(this, e.message, Toast.LENGTH_LONG).show()
+        }
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?) =

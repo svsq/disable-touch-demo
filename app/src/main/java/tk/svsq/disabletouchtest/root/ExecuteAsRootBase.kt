@@ -10,7 +10,7 @@ abstract class ExecuteAsRootBase {
         var retval = false
         try {
             val commands = commandsToExecute
-            if (null != commands && commands.size > 0) {
+            if (commands.isNotEmpty()) {
                 val suProcess = Runtime.getRuntime().exec("su")
                 val os = DataOutputStream(suProcess.outputStream)
 
@@ -22,6 +22,7 @@ abstract class ExecuteAsRootBase {
                             
                             """.trimIndent()
                     )
+
                     os.flush()
                 }
                 os.writeBytes("exit\n")
